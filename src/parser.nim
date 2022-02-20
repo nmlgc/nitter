@@ -139,7 +139,10 @@ proc parseLegacyMediaEntities(js: JsonNode; result: var Tweet) =
     for m in jsMedia:
       case m.getTypeName:
       of "photo":
-        result.photos.add m{"media_url_https"}.getImageStr
+        result.photos.add Photo(
+          url: m{"media_url_https"}.getImageStr,
+          altText: m{"ext_alt_text"}.getStr
+        )
       of "video":
         result.video = some(parseVideo(m))
         with user, m{"additional_media_info", "source_user"}:
@@ -165,7 +168,10 @@ proc parseMediaEntities(js: JsonNode; result: var Tweet) =
       with mediaInfo, mediaEntity{"media_results", "result", "media_info"}:
         case mediaInfo.getTypeName
         of "ApiImage":
-          result.photos.add mediaInfo{"original_img_url"}.getImageStr
+          result.photos.add Photo(
+            url: mediaInfo{"original_img_url"}.getImageStr,
+            altText: mediaInfo{"alt_text"}.getStr
+          )
         of "ApiVideo":
           let status = mediaEntity{"media_results", "result", "media_availability_v2", "status"}
           result.video = some Video(
@@ -332,7 +338,10 @@ proc parseTweet(js: JsonNode; jsCard: JsonNode = newJNull()): Tweet =
     let name = jsCard{"name"}.getStr
     if "poll" in name:
       if "image" in name:
-        result.photos.add jsCard{"binding_values", "image_large"}.getImageVal
+        result.photos.add Photo(
+          url: jsCard{"binding_values", "image_large"}.getImageVal,
+          altText: ""
+        )
 
       result.poll = some parsePoll(jsCard)
     elif name == "amplify":
